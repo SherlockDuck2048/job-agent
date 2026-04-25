@@ -1,0 +1,89 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === Output data (generated at runtime) ===
+*.xlsx
+*.json
+*.log
+*.txt
+*.html
+*.png
+*.pdf
+*.bat
+candidates/
+reports/
+artifacts/
+logs/
+cron_*.json
+
+# === All underscore-prefixed files (debug/temp) ===
+_*
+99
+
+# === Test scripts ===
+test_*.py
+
+# === Debug/analyze/check/fix/extract/batch/upgrade scripts ===
+analyze_*.py
+check_*.py
+fix_*.py
+extract_*.py
+batch_*.py
+upgrade_*.py
+re_download_*.py
+scan_deloitte.py
+
+# === Runtime tools not part of core ===
+run_all_scanners.py
+run_dispatcher.py
+run_test.py
+merge_today.py
+scanner.mjs
+linkedin_login*.py
+indeed_scanner.py
+scan_linkedin_cdp.js
+
+# === Scanner backups/archive ===
+backups_*/
+*_backup_*.py
+*.bak*
+scanners/_archive/
+scanners/_create_tasks_excel*.py
+scanners/_run_clp*.py
+scanners/_check_tasks.py
+scanners/citi_debug.py
+scanners/citi_verify.py
+scanners/hsbc_debug.py
+scanners/fix_page_close.ps1
+scanners/test_*.py
+scanners/batch_*.py
+scanners/upgrade_*.py
+scanners/analyze_*.py
+scanners/extract_*.py
+scanners/_scan_axa_log.txt
+scanners/_scanner_tasks_status.json
+scanners/test_out.txt
+
+# === Task summaries ===
+task-summary_*.md
+scan_dbs_task_*.md
+
+# === LinkedIn cookies (sensitive) ===
+linkedin_cookies.json
+
+# === Config backups ===
+*.bak*
