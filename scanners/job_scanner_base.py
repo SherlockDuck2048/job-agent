@@ -559,6 +559,38 @@ JD_SELECTORS = {
         '.jobdescription',
         '#job-description'
     ],
+    'taleo': [
+        '#requisitionDescriptionInterface',
+        '[class*="reqDescription"]',
+        '[id*="Description"]',
+        '.jobdescription',
+        '.talentSearchDetailDescription',
+        'article.content'
+    ],
+    'peoplesoft': [
+        '[id*="jobdetail"]',
+        '[class*="job-detail"]',
+        '#jobdetail\\.1',
+        '.PSLEVEL1CRDS',
+        '[class*="description"]',
+        'table.dataGrid td',
+        '.pagebody'
+    ],
+    'pageup': [
+        '.job-description',
+        '[class*="job-desc"]',
+        '[class*="detail-content"]',
+        '.content-body',
+        '.job-detail-body',
+        '#job-description'
+    ],
+    'jobsdb': [
+        '[data-testid="job-description"]',
+        '.job-description',
+        "[class*='description']",
+        '.content-body',
+        'article'
+    ],
     'default': [
         '.job-description',
         '#job-description',

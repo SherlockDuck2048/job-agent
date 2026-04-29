@@ -104,7 +104,17 @@ def update_job_entry(link: str, title: str, company: str,
     today = datetime.now().strftime("%Y-%m-%d")
     
     # 提取 job_id 从 URL
+    # 1. 尝试 path 最后一段（如 /job/abc123 → abc123）
     job_id = link.split("/")[-1].split("?")[0]
+    # 2. 如果 path 最后一段是通用名（如 JobDetail），尝试 query 中的 jobId/refnr 等
+    if not job_id or job_id.lower() in ("jobdetail", "job", "jobs", "search", "apply", "detail"):
+        from urllib.parse import urlparse, parse_qs
+        qs = parse_qs(urlparse(link).query)
+        for key in ("jobId", "jobid", "refnr", "id", "reqId", "job_id"):
+            if key in qs:
+                job_id = qs[key][0]
+                break
+    # 3. 最终 fallback: URL hash
     if not job_id:
         job_id = hashlib.md5(link.encode()).hexdigest()[:12]
     

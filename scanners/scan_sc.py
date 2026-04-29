@@ -1,18 +1,15 @@
-﻿r"""
+r"""
 Standard Chartered Scanner - 完整重写
 URL来源: scan_strategies.py 动态读取 ("sc" key)
 参考: scan_ubs.py (分页结构) + scan_dbs.py (Excel格式)
 """
-import sys, os, json, time, io, contextlib, re, io
-
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+import sys, os, json, time, io, contextlib, re
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(__file__))
 from cco_scorer import CCOSCORER, score_job
-from job_scanner_base import get_jd_from_url, new_page, append_scanner_to_excel
+from job_scanner_base import get_jd_from_url, new_page
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(SCRIPT_DIR, "..", "candidates", "raw", f"sc_{datetime.now().strftime('%Y-%m-%d')}.json")
@@ -162,6 +159,45 @@ def _extract_jobs(page, seen_hrefs, seen_titles):
     return new_count, jobs
 
 
+def write_to_excel(jobs, output_path):
+    import openpyxl
+    _PREFIX = "https://jobs.standardchartered.com"
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    if os.path.exists(output_path):
+        wb = openpyxl.load_workbook(output_path)
+        ws = wb.active
+    else:
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "AI Jobs"
+        ws.append(["排名", "来源平台", "公司", "职位", "链接", "发布时间", "匹配度"])
+    # 归一化去重
+    existing = set()
+    for r in range(2, ws.max_row + 1):
+        v = ws.cell(r, 5).value
+        if v:
+            existing.add(v.replace(_PREFIX, "") if v.startswith(_PREFIX) else v)
+    row = ws.max_row + 1
+    written = 0
+    for job in jobs:
+        raw_link = job.get("link", "")
+        norm = raw_link.replace(_PREFIX, "") if raw_link.startswith(_PREFIX) else raw_link
+        if norm in existing:
+            continue
+        existing.add(norm)
+        full_link = _PREFIX + norm if norm.startswith("/") else norm
+        ws.cell(row, 1, row - 1)
+        ws.cell(row, 2, job.get("source", SC_NAME))
+        ws.cell(row, 3, job.get("company", SC_NAME))
+        ws.cell(row, 4, job.get("title", ""))
+        ws.cell(row, 5, full_link)
+        ws.cell(row, 6, job.get("scraped_at", "")[:10])
+        ws.cell(row, 7, job.get("score", 0))
+        row += 1
+        written += 1
+    wb.save(output_path)
+    print(f"  [Excel] wrote {written} new rows -> {output_path}")
+
 
 def scan_sc():
     scorer = CCOSCORER()
@@ -298,5 +334,4 @@ def scan_sc():
 
 if __name__ == "__main__":
     scan_sc()
-
 

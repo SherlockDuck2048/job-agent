@@ -382,7 +382,13 @@ class CCOSCORER:
             return {'penalty': 20, 'reason': 'title暗示要求10年以上高层管理经验'}
         if any(k in t for k in ['vp ', ' vice president', 'avp', 'assistant vice president', 'director']):
             return {'penalty': 10, 'reason': 'title暗示要求8-10年中高层管理经验'}
-        if any(k in t for k in ['senior manager', 'principal', 'head of']):
+        if any(k in t for k in ['senior manager', 'principal']):
+            return {'penalty': 5, 'reason': 'title暗示要求高级经验'}
+        if 'head of' in t:
+            # Head of AI/Data/Digital/Analytics → 不扣分（符合CCO目标岗位）
+            if any(k in t for k in ['ai', 'data', 'digital', 'analytics']):
+                return {'penalty': 0, 'reason': ''}
+            # 其他 head of 岗位 → 扣5分
             return {'penalty': 5, 'reason': 'title暗示要求高级经验'}
         return {'penalty': 0, 'reason': ''}
     

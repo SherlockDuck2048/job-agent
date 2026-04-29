@@ -1,20 +1,33 @@
-﻿"""
+﻿# -*- coding: utf-8 -*-
+"""
 Zurich Insurance Scanner
 URL: https://www.careers.zurich.com/search/?q=AI&locationsearch=hong+kong
 从 scan_strategies.py 动态读取配置。
+Plan C: JD 抓取 (get_jd_from_url)
+Plan X: 跨会话去重 (seen_jobs)
+Excel: append_scanner_to_excel
 """
 import sys, os, json, time, io
-
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs, unquote
 from playwright.sync_api import sync_playwright
 
+# UTF-8 wrapper
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from job_scanner_base import append_scanner_to_excel
 from cco_scorer import score_job
+from job_scanner_base import get_jd_from_url, new_page, append_scanner_to_excel
+from seen_jobs import load_seen_jobs, update_job_entry, save_seen_jobs
+
+NAME = "Zurich"
+RAW_DIR = os.path.join(os.path.dirname(__file__), "..", "candidates", "raw")
 
 
 def load_strategies():
@@ -60,7 +73,7 @@ def run():
     print(f"=== {name} Scanner ===")
     print(f"  Base URL: {base_url}")
 
-    all_jobs = []
+    all_entries = []  # Stage 1 收集的所有职位
     seen_hrefs = set()
     seen_titles = set()
 
@@ -114,7 +127,7 @@ def run():
             raw_links = page.query_selector_all("a[href*='/job/']")
             print(f"  Links found: {len(raw_links)}")
 
-            # 状态文字：正文中的搜索结果行
+            # 状态文字
             body_text = page.inner_text("body")
             status_text = ""
             for line in body_text.split("\n"):
@@ -138,9 +151,8 @@ def run():
                 print("  [STOP] No links on this page")
                 break
 
-            # 去重：同一条职位在页面出现两次（locale 不同）
+            # 收集本页职位（仅 href 去重，不评分）
             hrefs_this_page = set()
-            page_jobs = 0
             for link_el in raw_links:
                 try:
                     href = link_el.get_attribute("href") or ""
@@ -152,7 +164,6 @@ def run():
                         continue
                     hrefs_this_page.add(href)
 
-                    # Title: 优先链接文字，次选 URL slug
                     title = link_el.inner_text().strip()
                     if not title or len(title) < 5:
                         title = _extract_title_from_slug(href)
@@ -160,7 +171,7 @@ def run():
                     if not title:
                         continue
 
-                    # Deduplication: href > title
+                    # 跨页去重
                     if href in seen_hrefs:
                         print(f"    [DUP href] {title[:60]}")
                         continue
@@ -172,52 +183,102 @@ def run():
                         continue
                     seen_titles.add(title_lower)
 
-                    job = {
+                    full_link = href if href.startswith("http") else f"https://www.careers.zurich.com{href}"
+
+                    all_entries.append({
                         "title": title,
                         "company": name,
                         "location": "Hong Kong",
-                        "link": href,
+                        "link": full_link,
                         "source": name,
                         "keyword": keyword,
-                        "scraped_at": datetime.now().isoformat(),
-                    }
-
-                    scored = score_job(job)
-                    tag = "[MATCH]" if scored.get("isRecommended") else "[skip]"
-                    print(f"    {tag} {title[:60]} ({scored.get('score')})")
-                    if scored.get("isRecommended"):
-                        all_jobs.append(scored)
-
-                    page_jobs += 1
+                    })
 
                 except Exception as e:
                     print(f"    ! Link error: {e}")
                     continue
 
-            print(f"  Page {page_number}: {page_jobs} processed, "
-                  f"total raw={len(seen_hrefs)}, matched={len(all_jobs)}")
+            print(f"  Page {page_number}: collected {len(hrefs_this_page)}, total raw={len(seen_hrefs)}")
             page_number += 1
 
-        browser.close()
+        # ── Stage 2: Plan C (JD) + Plan X (去重) + 评分 ──
+        print(f"\n=== Stage 2: {len(all_entries)} jobs → Plan C + Plan X + Scoring ===")
 
+        # [Plan X] 加载去重索引
+        seen_data = load_seen_jobs()
+        all_matched = []
+
+        jd_page = context.new_page()
+        try:
+            for i, job in enumerate(all_entries, 1):
+                title = job["title"]
+                link = job["link"]
+
+                # quick_filter
+                scored = score_job(job)
+                if not scored.get("isRecommended"):
+                    print(f"  [{i}/{len(all_entries)} SKIP] {title[:55]} ({scored.get('score')})")
+                    continue
+
+                # [Plan C] 获取 JD
+                jd_text = ""
+                try:
+                    jd_text = get_jd_from_url(jd_page, link, platform="default")
+                    job["description"] = jd_text
+                    if jd_text:
+                        print(f"  [{i}/{len(all_entries)} JD] {len(jd_text)} chars")
+                except Exception as e:
+                    print(f"  [{i}/{len(all_entries)} JD-ERR] {str(e)[:50]}")
+
+                # 重新评分（含 JD）
+                scored = score_job(job)
+                if not scored.get("isRecommended"):
+                    print(f"  [{i}/{len(all_entries)} SKIP-after-JD] {title[:55]} ({scored.get('score')})")
+                    continue
+
+                # [Plan X] 去重检查
+                link_key = scored.get("link", link)
+                from seen_jobs import check_job_status
+                status = check_job_status(link_key, scored.get("title", title), seen_data)
+
+                if status == "unchanged":
+                    print(f"  [{i}/{len(all_entries)} UNCHANGED] {title[:55]} P{scored.get('priority')} {scored.get('score')}")
+                    continue
+
+                update_job_entry(link_key, scored.get("title", title), NAME,
+                                 scored.get("description", jd_text), seen_data, status)
+                all_matched.append(scored)
+                print(f"  [{i}/{len(all_entries)} MATCH! {status.upper()}] {title[:55]} P{scored.get('priority')} {scored.get('score')}")
+        finally:
+            jd_page.close()
+            browser.close()
+
+    # [Plan X] 保存去重索引
+    save_seen_jobs(seen_data)
+
+    # 保存 JSON
     out_dir = os.path.join(os.path.dirname(__file__), "..", "candidates", "raw")
     os.makedirs(out_dir, exist_ok=True)
-    out_file = os.path.join(out_dir, f"zurich_{datetime.now().strftime('%Y-%m-%d')}.json")
+    today = datetime.now().strftime("%Y-%m-%d")
+    out_file = os.path.join(out_dir, f"zurich_{today}.json")
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump({
             "source": name,
             "url": base_url,
             "date": datetime.now().isoformat(),
             "total_raw": len(seen_hrefs),
-            "total_matched": len(all_jobs),
-            "jobs": all_jobs,
+            "total_matched": len(all_matched),
+            "jobs": all_matched,
         }, f, ensure_ascii=False, indent=2)
 
-    print(f"\n[COMPLETE] raw={len(seen_hrefs)} matched={len(all_jobs)} -> {out_file}")
-    return all_jobs
+    print(f"\n[COMPLETE] raw={len(seen_hrefs)} matched={len(all_matched)} -> {out_file}")
+
+    # Excel 追加
+    if all_matched:
+        append_scanner_to_excel(out_file)
+
+    return all_matched
 
 
 if __name__ == "__main__":
     run()
-
-

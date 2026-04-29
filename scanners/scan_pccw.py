@@ -1,4 +1,4 @@
-﻿"""
+"""
 PCCW/HKT Scanner - Taleo CMS
 URL: https://job.pccw.com/hkt/search/?createNewAlert=false&q=AI
 结果: 19 jobs (all HK, no pagination)
@@ -11,20 +11,22 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(__file__))
-from job_scanner_base import append_scanner_to_excel
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from job_scanner_base import append_scanner_to_excel, get_jd_from_url, new_page
 from cco_scorer import score_job
+from seen_jobs import load_seen_jobs, save_seen_jobs, check_job_status, update_job_entry
 
 KEYWORDS = ["AI"]
 LOCATION = "Hong Kong"
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "..", "candidates", "raw", f"pccw_{datetime.now().strftime('%Y-%m-%d')}.json")
 
 # ─── 从 scan_strategies 读取配置（禁止 print 干扰）─────────────────────────
-import io, contextlib
+import io as _io, contextlib as _ctx
 STRATEGIES_FILE = os.path.join(os.path.dirname(__file__), "..", "config", "scan_strategies.py")
 _site_config = {}
 _strategies_src = open(STRATEGIES_FILE, encoding="utf-8").read()
 # 静默 exec，禁止 scan_strategies 里的 print 语句产生输出
-with contextlib.redirect_stdout(io.StringIO()):
+with _ctx.redirect_stdout(_io.StringIO()):
     exec(compile(_strategies_src, STRATEGIES_FILE, "exec"))
 _strategy = _site_config.get("hkt") or _site_config.get("pccw", {})
 BASE_URL = _strategy.get("url", "https://job.pccw.com/hkt/search/?createNewAlert=false&q=AI")
@@ -135,6 +137,22 @@ def scan_pccw():
 
         browser.close()
 
+    # ── Plan C: 抓取 JD ────────────────────────────────────────────────────
+    print(f"\n=== Plan C: Fetching JDs ({len(all_jobs)} matched jobs) ===")
+    for job in all_jobs:
+        link = job.get("link", "")
+        if link:
+            with sync_playwright() as p2:
+                b2 = p2.chromium.launch(headless=True)
+                ctx2 = b2.new_context(viewport={"width": 1920, "height": 1080})
+                pg2 = ctx2.new_page()
+                jd_text = get_jd_from_url(pg2, link, "taleo")
+                pg2.close()
+                b2.close()
+            job["full_jd"] = jd_text
+            jd_len = len(jd_text) if jd_text else 0
+            print(f"  JD [{jd_len} chars] {job.get('title', '')[:50]}")
+
     # ── 保存 ───────────────────────────────────────────────────────────────
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
@@ -146,10 +164,27 @@ def scan_pccw():
         }, f, ensure_ascii=False, indent=2)
 
     print(f"\n[COMPLETE] {len(all_jobs)} matched jobs saved to: {OUTPUT_FILE}")
+
+    # ── Plan X: 跨会话去重 ─────────────────────────────────────────────────
+    print("\n=== Plan X: Cross-session deduplication ===")
+    seen_data = load_seen_jobs()
+    for job in all_jobs:
+        link = job.get("link", "")
+        title = job.get("title", "")
+        company = job.get("company", "")
+        jd_text = job.get("full_jd", "") or job.get("description", "")
+        status = check_job_status(link, title, seen_data)
+        update_job_entry(link, title, company, jd_text, seen_data, status)
+        print(f"  [{status.upper()}] {title[:50]}")
+    save_seen_jobs(seen_data)
+
+    # ── 写入 Excel ─────────────────────────────────────────────────────────
+    if all_jobs:
+        append_scanner_to_excel(OUTPUT_FILE)
+        print("[EXCEL] Updated")
+
     return all_jobs
 
 
 if __name__ == "__main__":
     scan_pccw()
-
-

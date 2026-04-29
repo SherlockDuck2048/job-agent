@@ -3,7 +3,7 @@ BOCHK Scanner - PageUp People CMS
 URL: https://careers.pageuppeople.com/798/cw/en/search/?search-keyword=AI
 结果: 15 jobs, 单页无分页
 """
-import sys, os, json, time, io, contextlib, io
+import sys, os, json, time, io, contextlib, re
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
@@ -11,8 +11,9 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(__file__))
-from job_scanner_base import append_scanner_to_excel
 from cco_scorer import score_job
+from job_scanner_base import get_jd_from_url, new_page, append_scanner_to_excel
+from seen_jobs import load_seen_jobs, save_seen_jobs, check_job_status, update_job_entry
 
 KEYWORDS = ["AI"]
 LOCATION = "Hong Kong"
@@ -21,11 +22,11 @@ OUTPUT_FILE = os.path.join(SCRIPT_DIR, "..", "candidates", "raw", f"bochk_{datet
 
 # ─── 从 scan_strategies 读取配置（禁止 print 干扰）─────────────────────────
 STRATEGIES_FILE = os.path.join(SCRIPT_DIR, "..", "config", "scan_strategies.py")
-_site_config = {}
+_globals = {}
 _strategies_src = open(STRATEGIES_FILE, encoding="utf-8").read()
 with contextlib.redirect_stdout(io.StringIO()):
-    exec(compile(_strategies_src, STRATEGIES_FILE, "exec"))
-_strategy = _site_config.get("bochk", {})
+    exec(compile(_strategies_src, STRATEGIES_FILE, "exec"), _globals)
+_strategy = _globals.get("SCAN_STRATEGIES", {}).get("bochk", {})
 BASE_URL = _strategy.get("url", "https://careers.pageuppeople.com/798/cw/en/search/?search-keyword=AI")
 
 
@@ -40,9 +41,12 @@ def _safe_close(page):
 def scan_bochk():
     print("=== BOCHK Scanner ===")
     all_jobs = []
-    raw_jobs = []  # track all raw jobs found
-    seen_links = {}   # href deduplication (primary)
-    seen_titles = {}  # title deduplication (fallback)
+    raw_jobs = []       # track all raw jobs found
+    seen_links = {}     # href deduplication (primary)
+    seen_titles = {}    # title deduplication (fallback)
+
+    # ── Plan X: 加载去重索引 ──────────────────────────────────────────────
+    seen_data = load_seen_jobs()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -119,10 +123,19 @@ def scan_bochk():
                             "source": "BOCHK",
                             "scraped_at": datetime.now().isoformat()
                         }
-                        raw_jobs.append(job)  # track raw job
+
+                        # ── Plan X: 跨会话去重 ──────────────────────────────
+                        status = check_job_status(link, title, seen_data)
+                        if status == "unchanged":
+                            print(f"    [SKIP] {title} (unchanged)")
+                            continue
+
+                        raw_jobs.append(job)
 
                         scored = score_job(job)
                         if scored.get("isRecommended"):
+                            # ── Plan X: 更新去重索引 ──────────────────────
+                            update_job_entry(link, title, "BOCHK", "", seen_data, status)
                             all_jobs.append(scored)
 
                     except Exception:
@@ -132,13 +145,10 @@ def scan_bochk():
                 if page_num >= max_pages:
                     break
 
-                # 状态文字：找 "Showing X-Y of Z"
-                import re
                 body_text = page.inner_text("body")
                 status_match = re.search(r'[Ss]howing\s*(\d+)[- ]+(\d+)\s*(?:of|共)?\s*(\d+)', body_text)
                 current_status = status_match.group(0) if status_match else body_text[:200]
 
-                # 状态文字稳定检测
                 if current_status == prev_status and last_count == page_new_links == 0:
                     stable_count += 1
                 else:
@@ -151,7 +161,6 @@ def scan_bochk():
                     print("  [Stop] Status stable x2 - no more pages")
                     break
 
-                # 尝试找下一页按钮
                 next_btn = None
                 for sel in [
                     "button[class*='next']", "a[class*='next']",
@@ -198,9 +207,50 @@ def scan_bochk():
 
         browser.close()
 
-    # ── 保存 ──────────────────────────────────────────────────────────────
+    # ── Plan C: 批量抓取 JD ──────────────────────────────────────────────
+    if all_jobs:
+        print(f"\n[Plan C] Fetching JD for {len(all_jobs)} matched jobs...")
+        jd_browser = None
+        jd_page = None
+        try:
+            jd_browser = sync_playwright().start().chromium.launch(headless=True)
+            jd_page = jd_browser.new_page()
+            for job in all_jobs:
+                link = job.get("link", "")
+                if not link:
+                    continue
+                try:
+                    jd_text = get_jd_from_url(jd_page, link, "pageup")
+                    job["full_jd"] = jd_text
+                    # ── Plan X: 更新 JD 文本到去重索引 ────────────────
+                    update_job_entry(link, job.get("title", ""), "BOCHK", jd_text, seen_data, "updated")
+                    print(f"    ✓ {job.get('title', '')[:40]} ({len(jd_text)} chars)")
+                except Exception as e:
+                    print(f"    ✗ {job.get('title', '')[:40]} JD fetch failed: {e}")
+        finally:
+            if jd_page:
+                _safe_close(jd_page)
+            if jd_browser:
+                try:
+                    jd_browser.close()
+                except Exception:
+                    pass
+
+        # 重新保存含 JD 的 JSON
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            json.dump({
+                "source": "BOCHK",
+                "url": BASE_URL,
+                "date": datetime.now().isoformat(),
+                "total_raw": len(raw_jobs),
+                "total_matched": len(all_jobs),
+                "jobs": all_jobs
+            }, f, ensure_ascii=False, indent=2)
+
+    # ── 保存 raw JSON（无 JD 版）──────────────────────────────────────────
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    raw_file = OUTPUT_FILE.replace(".json", "_raw.json")
+    with open(raw_file, "w", encoding="utf-8") as f:
         json.dump({
             "source": "BOCHK",
             "url": BASE_URL,
@@ -210,11 +260,18 @@ def scan_bochk():
             "jobs": all_jobs
         }, f, ensure_ascii=False, indent=2)
 
+    # ── Plan X: 保存去重索引 ──────────────────────────────────────────────
+    save_seen_jobs(seen_data)
+    print(f"[Plan X] Seen jobs saved")
+
+    # ── Excel 输出 ────────────────────────────────────────────────────────
+    if all_jobs:
+        append_scanner_to_excel(OUTPUT_FILE)
+        print(f"[Excel] Results appended")
+
     print(f"\n[COMPLETE] {len(raw_jobs)} raw / {len(all_jobs)} matched jobs saved to: {OUTPUT_FILE}")
     return all_jobs
 
 
 if __name__ == "__main__":
     scan_bochk()
-
-

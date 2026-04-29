@@ -50,7 +50,7 @@
 | citi | ⚠️ | 2026-04-08 | ✅ 新URL已更新（Hong Kong SAR路径），需重新测试 |
 | sc (Standard Chartered) | ⚠️ | 2026-04-08 | 用户URL已更新，需重新测试 |
 | ubs | ✅ | 2026-04-13 | Code Frozen -- 51 raw / 2 matched (P1×2: Global Banking IB Analyst HK 75, IB Analyst Canada 75)，keyword通过JS hash设置，li.job选择器，location=first .position3，单页无需分页 |
-| accenture | ✅ | 2026-04-13 | Code Frozen — 12 raw / 4 matched (P0×2: BA Lead/BA Assoc., P1×2: Data Analyst/Consultant, Consulting Manager) |
+| accenture | ✅ | 2026-04-27 | Code Frozen + Plan C + Plan X + Excel ✅ — 12 raw / 4 matched (P0×2: BA Lead/BA Assoc., P1×2: Data Analyst/Consultant, Consulting Manager)；cron `scan_accenture_daily` 每天 14:45 |
 | deloitte | ❓ | — | 用户URL已提供，待测试 |
 | ey | ❓ | — | Mokahr平台，待测试 |
 | kpmg | ❓ | — | Mokahr平台，待测试 |

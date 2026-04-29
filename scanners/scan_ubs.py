@@ -1,18 +1,16 @@
-﻿"""
+"""
 UBS Scanner - Taleo-like TGnewUI SPA
 URL: https://jobs.ubs.com/TGnewUI/Search/home/HomeWithPreLoad?partnerid=25008&siteid=5012&PageType=searchResults&SearchType=linkquery&LinkID=15231
 关键词通过搜索表单填入（hash参数不会持久化）
 """
-import sys, os, json, time, io, contextlib, re, io
-
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+import sys, os, json, time, io, contextlib, re
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(__file__))
-from job_scanner_base import append_scanner_to_excel
 from cco_scorer import score_job
+from job_scanner_base import append_scanner_to_excel
+from seen_jobs import load_seen_jobs, save_seen_jobs, check_job_status, update_job_entry
 
 KEYWORDS = ["AI"]
 LOCATION = "Hong Kong"
@@ -290,11 +288,13 @@ def scan_ubs():
             "jobs": all_jobs
         }, f, ensure_ascii=False, indent=2)
 
+    if all_jobs:
+        append_scanner_to_excel(OUTPUT_FILE)
+
     print(f"\n[COMPLETE] {len(raw_jobs)} raw / {len(all_jobs)} matched jobs saved to: {OUTPUT_FILE}")
     return all_jobs
 
 
 if __name__ == "__main__":
     scan_ubs()
-
 

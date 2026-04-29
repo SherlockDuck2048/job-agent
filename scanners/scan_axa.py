@@ -2,16 +2,14 @@
 AXA Scanner
 Requirements: pagination to last page (status stable), href dedup > title dedup, URL from scan_strategies
 """
-import sys, os, json, time, io
-
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+import sys, os, json, time
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(__file__))
-from job_scanner_base import append_scanner_to_excel
 from cco_scorer import score_job
+from job_scanner_base import append_scanner_to_excel
+from seen_jobs import load_seen_jobs, save_seen_jobs, check_job_status, update_job_entry
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJ_DIR = os.path.dirname(SCRIPT_DIR)
@@ -162,10 +160,12 @@ def scan_axa():
         json.dump(result, f, ensure_ascii=False, indent=2)
 
     matched = [j for j in all_jobs if j.get("isRecommended")]
+    if matched:
+        append_scanner_to_excel(OUTPUT_FILE)
+
     print(f"\n[COMPLETE] {len(raw_jobs)} raw / {len(matched)} matched -> {OUTPUT_FILE}")
     return all_jobs
 
 
 if __name__ == "__main__":
     scan_axa()
-

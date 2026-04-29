@@ -10,15 +10,16 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 from datetime import datetime
 import urllib.request
-import openpyxl
 
 sys.path.insert(0, os.path.dirname(__file__))
-from job_scanner_base import append_scanner_to_excel
+from job_scanner_base import get_jd_from_url, append_scanner_to_excel
 from cco_scorer import CCOSCORER, score_job
+from seen_jobs import load_seen_jobs, save_seen_jobs, check_job_status, update_job_entry
+
+from playwright.sync_api import sync_playwright
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(SCRIPT_DIR, "..", "candidates", "raw", f"ccbasia_{datetime.now().strftime('%Y-%m-%d')}.json")
-EXCEL_FILE = os.path.join(SCRIPT_DIR, "..", "config", "HK_AI_jobs_all.xlsx")
 
 BASE_URL = "https://online.asia.ccb.com/PersonalHKWeb/careeropportunity/webForm/actShowList.do"
 SC_NAME = "CCB Asia"
@@ -37,15 +38,6 @@ def _fetch_page(url):
     return r.read().decode("utf-8", errors="replace")
 
 
-def _safe_close(page):
-    try:
-        if page and not page.is_closed():
-            page.close()
-    except Exception:
-        pass
-
-
-
 def scan_ccbasia():
     scorer = CCOSCORER()
     all_jobs = []
@@ -53,87 +45,117 @@ def scan_ccbasia():
     seen_hrefs = set()
     seen_titles = set()
 
-    # ── 抓取 HTML ──────────────────────────────────────────────
+    # ── Plan X: 加载去重索引 ─────────────────────────────────
+    seen_data = load_seen_jobs()
+
+    # ── Plan C: 启动浏览器用于 JD 抓取 ──────────────────────
+    pw = sync_playwright().start()
+    browser = pw.chromium.launch(headless=True)
+    context = browser.new_context()
+    jd_page = context.new_page()
+    jd_page.set_default_timeout(30000)
+
     try:
-        html = _fetch_page(BASE_URL)
-    except Exception as e:
-        print(f"  ! Fetch failed: {e}")
-        return []
+        # ── 抓取 HTML ──────────────────────────────────────
+        try:
+            html = _fetch_page(BASE_URL)
+        except Exception as e:
+            print(f"  ! Fetch failed: {e}")
+            return []
 
-    # ── 解析 SSR 表格 ─────────────────────────────────────────
-    # 结构: <table><tr><td>title</td><td>dept</td><td>loc</td><td>status</td><td><a href="javascript:OpenDetailWindow('posno')"></td></tr>...
-    table_m = re.search(r"<table[^>]*>(.*?)</table>", html, re.DOTALL)
-    if not table_m:
-        print("  ! No table found")
-        return []
+        # ── 解析 SSR 表格 ─────────────────────────────────
+        table_m = re.search(r"<table[^>]*>(.*?)</table>", html, re.DOTALL)
+        if not table_m:
+            print("  ! No table found")
+            return []
 
-    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", table_m.group(1), re.DOTALL)
-    print(f"  Table rows: {len(rows)}")
+        rows = re.findall(r"<tr[^>]*>(.*?)</tr>", table_m.group(1), re.DOTALL)
+        print(f"  Table rows: {len(rows)}")
 
-    for ri, row_html in enumerate(rows[1:], 1):  # 跳过 header
-        cells = re.findall(r"<td[^>]*>(.*?)</td>", row_html, re.DOTALL)
-        if not cells:
-            continue
+        for ri, row_html in enumerate(rows[1:], 1):
+            cells = re.findall(r"<td[^>]*>(.*?)</td>", row_html, re.DOTALL)
+            if not cells:
+                continue
 
-        # 提取 title: 第一个 <a> 标签内的纯文本
-        title_m = re.search(r"<a[^>]+href=[^>]+>([^<]+)</a>", row_html)
-        if not title_m:
-            continue
-        title = re.sub(r"\s+", " ", title_m.group(1).strip())[:120]
-        if not title or len(title) < 5:
-            continue
+            title_m = re.search(r"<a[^>]+href=[^>]+>([^<]+)</a>", row_html)
+            if not title_m:
+                continue
+            title = re.sub(r"\s+", " ", title_m.group(1).strip())[:120]
+            if not title or len(title) < 5:
+                continue
 
-        # 提取部门/地点/状态: DisplayValue("text") 格式
-        raw_cells = re.findall(r"DisplayValue\([^)]+\)|([^<\n]+)", "".join(cells), re.DOTALL)
-        dept = next((re.sub(r"[^\w\s\-]", "", p).strip() for p in raw_cells if p.strip() and re.sub(r"[^\w\s]", "", p).strip() != title and "Hong Kong" not in p and "Full Time" not in p and "Contract" not in p and "Part Time" not in p), "")
-        dept = dept[:60]
+            raw_cells = re.findall(r"DisplayValue\([^)]+\)|([^<\n]+)", "".join(cells), re.DOTALL)
+            dept = next((re.sub(r"[^\w\s\-]", "", p).strip() for p in raw_cells if p.strip() and re.sub(r"[^\w\s]", "", p).strip() != title and "Hong Kong" not in p and "Full Time" not in p and "Contract" not in p and "Part Time" not in p), "")
+            dept = dept[:60]
 
-        # 提取职位编号和详情链接
-        posno_list = re.findall(r"javascript:OpenDetailWindow\(['\"]([^'\"]+)['\"]\)", row_html)
-        posno = posno_list[0] if posno_list else ""
-        raw_link = f"/PersonalHKWeb/careeropportunity/webForm/actGetCareerJobList.do?posno={posno}" if posno else ""
-        full_link = PREFIX + raw_link
+            posno_list = re.findall(r"javascript:OpenDetailWindow\(['\"]([^'\"]+)['\"]\)", row_html)
+            posno = posno_list[0] if posno_list else ""
+            raw_link = f"/PersonalHKWeb/careeropportunity/webForm/actGetCareerJobList.do?posno={posno}" if posno else ""
+            full_link = PREFIX + raw_link
 
-        # 跳过不合条件
-        if not posno:
-            continue
+            if not posno:
+                continue
 
-        # href 去重
-        if full_link in seen_hrefs:
-            continue
-        seen_hrefs.add(full_link)
+            if full_link in seen_hrefs:
+                continue
+            seen_hrefs.add(full_link)
 
-        # title 去重
-        tkey = title.lower()
-        if tkey in seen_titles:
-            continue
-        seen_titles.add(tkey)
+            tkey = title.lower()
+            if tkey in seen_titles:
+                continue
+            seen_titles.add(tkey)
 
-        job = {
-            "title": title,
-            "company": SC_NAME,
-            "location": "Hong Kong",
-            "link": full_link,
-            "keyword": "AI",
-            "source": SC_NAME,
-            "scraped_at": datetime.now().isoformat(),
-        }
-        raw_jobs.append(job)
-        print(f"  [{ri}] {title[:60]} | {dept}")
+            job = {
+                "title": title,
+                "company": SC_NAME,
+                "location": "Hong Kong",
+                "link": full_link,
+                "keyword": "AI",
+                "source": SC_NAME,
+                "scraped_at": datetime.now().isoformat(),
+            }
+            raw_jobs.append(job)
+            print(f"  [{ri}] {title[:60]} | {dept}")
 
-        # ── 评分 ──────────────────────────────────────────────
-        fr = scorer.quick_filter(job)
-        if not fr["passed"]:
-            print(f"       [FILTER] {fr['reason']}")
-            continue
-        scored = score_job(job)
-        if scored.get("isRecommended"):
-            all_jobs.append(scored)
-            print(f"       [MATCH] P{scored.get('priority')} ({scored.get('score')}) - {scored.get('reason', '')[:60]}")
-        else:
-            print(f"       [SKIP ] score={scored.get('score')} reason={scored.get('reason', '')[:50]}")
+            # ── 评分 ──────────────────────────────────────
+            fr = scorer.quick_filter(job)
+            if not fr["passed"]:
+                print(f"       [FILTER] {fr['reason']}")
+                continue
 
-    # ── 保存 ──────────────────────────────────────────────────
+            # ── Plan C: 抓取完整 JD ──────────────────────
+            jd_text = get_jd_from_url(jd_page, full_link, platform="default")
+            if jd_text:
+                job["description"] = jd_text
+                job["full_jd"] = jd_text
+
+            # ── Plan X: 去重检查 ─────────────────────────
+            status = check_job_status(full_link, title, seen_data)
+            if status == "unchanged":
+                print(f"       [SEEN  ] already in seen_jobs, skipping")
+                continue
+
+            scored = score_job(job)
+            scored["status"] = status
+
+            if scored.get("isRecommended"):
+                all_jobs.append(scored)
+                print(f"       [MATCH] P{scored.get('priority')} ({scored.get('score')}) - {scored.get('reason', '')[:60]}")
+            else:
+                print(f"       [SKIP ] score={scored.get('score')} reason={scored.get('reason', '')[:50]}")
+
+            # ── Plan X: 更新去重索引 ─────────────────────
+            update_job_entry(full_link, title, SC_NAME, jd_text, seen_data, status)
+
+    finally:
+        jd_page.close()
+        context.close()
+        browser.close()
+        pw.stop()
+        # ── Plan X: 保存去重索引 ─────────────────────────
+        save_seen_jobs(seen_data)
+
+    # ── 保存 JSON ──────────────────────────────────────────
     os.makedirs(os.path.dirname(OUTPUT_FILE) or ".", exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump({
@@ -147,10 +169,9 @@ def scan_ccbasia():
 
     print(f"\n[COMPLETE] {len(raw_jobs)} raw / {len(all_jobs)} matched -> {OUTPUT_FILE}")
     if all_jobs:
-        _append_scanner_to_excel(OUTPUT_FILE)
+        append_scanner_to_excel(OUTPUT_FILE)
     return all_jobs
 
 
 if __name__ == "__main__":
     scan_ccbasia()
-

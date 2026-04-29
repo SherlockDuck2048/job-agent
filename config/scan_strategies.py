@@ -35,8 +35,16 @@ SCAN_STRATEGIES = {
     },
     "jobsdb": {
         "name": "JobsDB",
-        "method": "skip",
-        "reason": "Cloudflare反爬，无法绕过"
+        "method": "cdp_url",
+        "url": "https://hk.jobsdb.com/AI-jobs/in-Hong-Kong-SAR?sortmode=ListedDate",
+        "selectors": {
+            "job_card": "[data-testid=\"job-card\"], article[data-automation=\"jobCard\"], .job-card",
+            "title": "[data-testid=\"job-title\"], .job-title, h1, h2, h3",
+            "company": ".company, [data-testid=\"company-name\"], .job-company",
+            "link": "a[href*='/job/']"
+        },
+        "pagination": "url ?page=N param",
+        "notes": "CDP模式翻到底；href主干去重；Plan C/JD抓取；Plan X/seen_jobs"
     },
     "michaelpage": {
         "name": "Michael Page",
