@@ -139,19 +139,33 @@ def scan_pccw():
 
     # ── Plan C: 抓取 JD ────────────────────────────────────────────────────
     print(f"\n=== Plan C: Fetching JDs ({len(all_jobs)} matched jobs) ===")
-    for job in all_jobs:
-        link = job.get("link", "")
-        if link:
-            with sync_playwright() as p2:
-                b2 = p2.chromium.launch(headless=True)
-                ctx2 = b2.new_context(viewport={"width": 1920, "height": 1080})
+    if all_jobs:
+        with sync_playwright() as p2:
+            b2 = p2.chromium.launch(headless=True)
+            ctx2 = b2.new_context(viewport={"width": 1920, "height": 1080})
+            for job in all_jobs:
+                link = job.get("link", "")
+                if not link:
+                    continue
                 pg2 = ctx2.new_page()
                 jd_text = get_jd_from_url(pg2, link, "taleo")
                 pg2.close()
-                b2.close()
-            job["full_jd"] = jd_text
-            jd_len = len(jd_text) if jd_text else 0
-            print(f"  JD [{jd_len} chars] {job.get('title', '')[:50]}")
+                job["full_jd"] = jd_text
+                jd_len = len(jd_text) if jd_text else 0
+
+                # 保存 JD 文件
+                m = re.search(r'/(\d+)/?$', link) or re.search(r'/(\d+)\??', link)
+                if m and jd_text:
+                    safe_id = m.group(1)
+                    jd_dir = os.path.join(os.path.dirname(OUTPUT_FILE), "..", "jd_store", "pccw")
+                    os.makedirs(jd_dir, exist_ok=True)
+                    jd_path = os.path.join(jd_dir, f"{safe_id}.txt")
+                    with open(jd_path, "w", encoding="utf-8") as f:
+                        f.write(jd_text)
+                    job["jd_file"] = f"pccw/{safe_id}.txt"
+
+                print(f"  JD [{jd_len} chars] {job.get('title', '')[:50]}  →  jd_file={job.get('jd_file', 'N/A')}")
+            b2.close()
 
     # ── 保存 ───────────────────────────────────────────────────────────────
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)

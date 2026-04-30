@@ -87,3 +87,4 @@ linkedin_cookies.json
 
 # === Config backups ===
 *.bak*
+!docs/*.xlsx

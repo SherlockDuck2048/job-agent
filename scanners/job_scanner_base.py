@@ -480,9 +480,9 @@ def append_scanner_to_excel(json_path: str, excel_path: str = None):
             continue
         
         # 准备行数据
-        # 获取 JD 摘要（提取有意义的段落）
+        # 获取 JD 摘要（使用 LLM 生成道法术器结构）
         full_jd = job.get('description', '') or job.get('full_jd', '')
-        jd_summary = extract_jd_summary(full_jd)
+        jd_summary = extract_jd_summary(full_jd, use_llm=True)
         
         # 获取 JD 文件路径：优先从 job JSON，其次查 seen_jobs 索引
         jd_file_path = job.get('jd_file', '')
@@ -491,8 +491,16 @@ def append_scanner_to_excel(json_path: str, excel_path: str = None):
             seen_jobs_map = seen_data.get('jobs', {})
             seen_entry = seen_jobs_map.get(link, {})
             jd_file_path = seen_entry.get('jd_file', '')
+        # 如果仍无路径，尝试从 link 推导（zurich/xxx.txt 格式）
         if not jd_file_path and full_jd:
-            jd_file_path = 'In JSON'
+            # 从 URL 提取 job ID
+            import re
+            job_id_match = re.search(r'/(\d+)\??', link)
+            if job_id_match:
+                job_id = job_id_match.group(1)
+                # 根据 source 确定子目录
+                source_lower = platform.lower().replace(' ', '_')
+                jd_file_path = f"{source_lower}/{job_id}.txt"
         
         next_row += 1
         row = [
