@@ -1,0 +1,852 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "b7253402-6bcb-4eb8-bfc8-67b462bd19fb",
+      "name": "daily-scan-bochk-ubs-axa",
+      "description": "每天10:00运行BOCHK/UBS/AXA扫描器",
+      "enabled": false,
+      "createdAtMs": 1776275286805,
+      "updatedAtMs": 1776351559170,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * *",
+        "tz": "Asia/Shanghai",
+        "staggerMs": 0
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "按顺序运行以下3个扫描器脚本，每个运行完报告结果，最后运行merge_results.py合并数据：1. python C:/Users/ClawAdmin/.qclaw/workspace/job-agent/scanners/scan_bochk.py 2. python C:/Users/ClawAdmin/.qclaw/workspace/job-agent/scanners/scan_ubs.py 3. python C:/Users/ClawAdmin/.qclaw/workspace/job-agent/scanners/scan_axa.py 4. python C:/Users/ClawAdmin/.qclaw/workspace/job-agent/merge_results.py",
+        "timeoutSeconds": 600
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1776304800016,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 169491,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "4bf7fea3-62e6-4938-9041-872d8a11b4f8",
+      "agentId": "main",
+      "name": "manulife-daily-scan",
+      "enabled": false,
+      "createdAtMs": 1776786655609,
+      "updatedAtMs": 1777734857150,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 0 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 Manulife 职位扫描器。执行：python C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent\\scanners\\scan_manulife.py"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1777653000009,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 56042,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true
+      }
+    },
+    {
+      "id": "ba8396c4-b983-4095-9fa1-e36ae7d4a6b3",
+      "agentId": "main",
+      "name": "scan_prudential_daily",
+      "enabled": false,
+      "createdAtMs": 1776914596236,
+      "updatedAtMs": 1777734863006,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 Prudential 扫描器(完整模式): 执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_prudential --no-dry-run, 然后将结果摘要发送给用户. 要求: (1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果摘要 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1777683600009,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 173131,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "6e953e3c-7e4c-4646-b22a-e6076d45d058",
+      "agentId": "jozgatymcjihpo6a",
+      "sessionKey": "agent:jozgatymcjihpo6a:session-1777113372396-wpf5b8",
+      "name": "28Hse每日新房盘监控",
+      "enabled": true,
+      "createdAtMs": 1777114036466,
+      "updatedAtMs": 1777730467935,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 22 * * *",
+        "tz": "Asia/Shanghai"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "你现在执行每日28Hse新房盘监控任务。\n\n## 步骤\n1. 运行以下命令抓取数据（注意用powershell不是pwsh）：\n   powershell -ExecutionPolicy Bypass -File \"C:\\Users\\clawAdmin\\.qclaw\\workspace-jozgatymcjihpo6a\\scrape_28hse.ps1\" -MaxPages 3\n\n2. 阅读命令输出，将原始数据整理为精美的楼市日报。\n\n## 输出格式要求\n- 标题：「🏠 28Hse 每日新房盘速报 | YYYY-MM-DD」\n- 按三大区域（香港岛、九龙、新界）分块展示\n- 每套楼盘精简一行：**楼盘名·片区** | 面积 | 售价 | 户型 | 楼层 | 核心亮点（标签中精选2-3个）\n- 若某区当日无新增，明确标注：「今日该片区无新增符合条件放盘」\n- 末尾附「📊 市场概览」：各区新增数量、均价区间、简要行情点评（1-2句）\n- 排版简洁干练，用emoji分区，不要啰嗦\n\n## 筛选条件（已在脚本中实现，仅供参考）\n总价≤1000万港币 | 2-3房 | 楼龄≤20年 | 中高层 | 私人住宅\n\n要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出日报 (4) 保持趋势研究员的专业简洁风格",
+        "timeoutSeconds": 300
+      },
+      "delivery": {
+        "mode": "announce",
+        "bestEffort": true
+      },
+      "state": {
+        "nextRunAtMs": 1777816800000,
+        "lastRunAtMs": 1777730400016,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 67919,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "2c154932-daf4-4ad0-bc8c-2c86f20042cb",
+      "agentId": "3wabihsxnyfzxx1i",
+      "sessionKey": "agent:3wabihsxnyfzxx1i:session-1777131751334-ht96ek",
+      "name": "AI热搜每日推送",
+      "enabled": false,
+      "createdAtMs": 1777131815906,
+      "updatedAtMs": 1777174901861,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * *",
+        "tz": "Asia/Shanghai"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "请执行以下任务：\n1. 使用 online-search 工具搜索以下关键词的热搜：\"AI\"、\"GENAI\"、\"AI Agent\"\n2. 筛选出与AI/大模型/智能体相关的热门话题（排除无关内容如科幻电影、游戏等）\n3. 整理成简报格式推送给我，包含：标题、热度趋势、简要解读（为什么值得关注）\n\n要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出提醒文字 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "bestEffort": true
+      },
+      "state": {
+        "lastRunAtMs": 1777161600016,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 226494,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "50fd025f-90f1-47bf-b77c-493dc841b257",
+      "agentId": "main",
+      "name": "scan_macquarie_daily",
+      "enabled": false,
+      "createdAtMs": 1777184196347,
+      "updatedAtMs": 1777734859081,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "执行 Macquarie 职位扫描：运行 python -m scanners.scan_macquarie --no-dry-run，完成后汇报扫描结果（raw数量、matched数量、新增职位列表）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 5 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1777683773140,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 53923,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true
+      }
+    },
+    {
+      "id": "c8e80a8f-e66b-44bf-9e83-ece4a2564522",
+      "agentId": "main",
+      "name": "scan_dbs_daily",
+      "enabled": true,
+      "createdAtMs": 1777192000000,
+      "updatedAtMs": 1777687351188,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 DBS 职位扫描: 执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_dbs --no-dry-run, 然后将结果摘要发送给用户. 要求: (1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果摘要 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777773600000,
+        "lastRunAtMs": 1777687200016,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 151172,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "hkjc-daily-scan",
+      "agentId": "main",
+      "name": "scan_hkjc_daily",
+      "enabled": true,
+      "createdAtMs": 1777198700000,
+      "updatedAtMs": 1777691006032,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 11 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 HKJC 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_hkjc --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777777200000,
+        "lastRunAtMs": 1777690800020,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 206012,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "fwd-daily-scan",
+      "agentId": "main",
+      "name": "scan_fwd_daily",
+      "enabled": false,
+      "createdAtMs": 1777199910686,
+      "updatedAtMs": 1777734873105,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 FWD 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_fwd --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1777694400015,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 278736,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "sunlife-daily-scan",
+      "agentId": "main",
+      "name": "scan_sunlife_daily",
+      "enabled": false,
+      "createdAtMs": 1777200117623,
+      "updatedAtMs": 1777734860612,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 SUNLIFE 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_sunlife --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1777687351188,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 48854,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "aig-daily-scan",
+      "agentId": "main",
+      "name": "scan_aig_daily",
+      "enabled": false,
+      "createdAtMs": 1777255119569,
+      "updatedAtMs": 1777734871057,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 11 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 AIG 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_aig --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1777691006032,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 72222,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "cncb-daily-scan",
+      "agentId": "main",
+      "name": "scan_cncb_daily",
+      "enabled": true,
+      "createdAtMs": 1777255519345,
+      "updatedAtMs": 1777734866891,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 CNCB 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_cncb --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777780800000,
+        "lastRunAtMs": 1777694678751,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 371316,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "hkex-daily-scan",
+      "agentId": "main",
+      "name": "scan_hkex_daily",
+      "enabled": true,
+      "createdAtMs": 1777255708066,
+      "updatedAtMs": 1777695117143,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 HKEX 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_hkex --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777780800000,
+        "lastRunAtMs": 1777695050067,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 67076,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "kpmg-daily-scan",
+      "agentId": "main",
+      "name": "scan_kpmg_daily",
+      "enabled": true,
+      "createdAtMs": 1777256231702,
+      "updatedAtMs": 1777699430448,
+      "schedule": {
+        "kind": "cron",
+        "expr": "5 13 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 KPMG 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_kpmg --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777784700000,
+        "lastRunAtMs": 1777699368481,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 61967,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "ocbc-daily-scan",
+      "agentId": "main",
+      "name": "scan_ocbc_daily",
+      "enabled": true,
+      "createdAtMs": 1777257759014,
+      "updatedAtMs": 1777698217234,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 13 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 OCBC 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_ocbc --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777784400000,
+        "lastRunAtMs": 1777698000017,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 217217,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "ccbasia-daily-scan",
+      "agentId": "main",
+      "name": "scan_ccbasia_daily",
+      "enabled": true,
+      "createdAtMs": 1777258227994,
+      "updatedAtMs": 1777699365960,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 13 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 CCBASIA 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_ccbasia --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777784400000,
+        "lastRunAtMs": 1777698217234,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 1148726,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "gs-daily-scan",
+      "agentId": "main",
+      "name": "scan_gs_daily",
+      "enabled": true,
+      "createdAtMs": 1777258607306,
+      "updatedAtMs": 1777702564425,
+      "schedule": {
+        "kind": "cron",
+        "expr": "15 14 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 GS 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_gs --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777788900000,
+        "lastRunAtMs": 1777702500015,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 64410,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "accenture-daily-scan",
+      "agentId": "main",
+      "name": "scan_accenture_daily",
+      "enabled": true,
+      "createdAtMs": 1777259529157,
+      "updatedAtMs": 1777704340402,
+      "schedule": {
+        "kind": "cron",
+        "expr": "45 14 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 ACCENTURE 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_accenture --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777790700000,
+        "lastRunAtMs": 1777704300023,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 40379,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "scan-pccw-daily-d42d2d29",
+      "name": "scan_pccw_daily",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 15 * * *"
+      },
+      "payload": {
+        "kind": "agentTurn",
+        "message": "python -m scanners.scan_pccw --no-dry-run"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "agentId": "main",
+      "sessionTarget": "current",
+      "wakeMode": "always",
+      "state": {
+        "nextRunAtMs": 1777793400000,
+        "lastRunAtMs": 1777707000020,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 129377,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true
+      },
+      "updatedAtMs": 1777707129397
+    },
+    {
+      "id": "bochk-daily-scan",
+      "agentId": "main",
+      "name": "scan_bochk_daily",
+      "enabled": true,
+      "createdAtMs": 1777296595959,
+      "updatedAtMs": 1777716144782,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 18 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 BOCHK 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_bochk --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777802400000,
+        "lastRunAtMs": 1777716000017,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 144765,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "53189bed-90a0-4106-9528-e1880e1ef309",
+      "name": "scan_ubs_daily",
+      "description": "UBS职位扫描",
+      "enabled": true,
+      "createdAtMs": 1777302121689,
+      "updatedAtMs": 1777717860553,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 18 * * *",
+        "tz": "Asia/Shanghai",
+        "staggerMs": 0
+      },
+      "sessionTarget": "fork",
+      "wakeMode": "always",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "cd C:/Users/ClawAdmin/.qclaw/workspace/job-agent && python -m scanners.scan_ubs --no-dry-run"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777804200000,
+        "lastRunAtMs": 1777717800014,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 60539,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "13331c85-e691-4c8f-ae78-5c5cfaee939e",
+      "name": "scan_axa_daily",
+      "description": "AXA职位扫描",
+      "enabled": false,
+      "createdAtMs": 1777302121689,
+      "updatedAtMs": 1777719742749,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 19 * * *",
+        "tz": "Asia/Shanghai",
+        "staggerMs": 0
+      },
+      "sessionTarget": "fork",
+      "wakeMode": "always",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "cd C:/Users/ClawAdmin/.qclaw/workspace/job-agent && python -m scanners.scan_axa --no-dry-run"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1777719600022,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 142727,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "5f876d13-d2b1-4df3-acf8-a8baa47d1eea",
+      "name": "scan_sc_daily",
+      "description": "Standard Chartered职位扫描",
+      "enabled": true,
+      "createdAtMs": 1777302121689,
+      "updatedAtMs": 1777721460318,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 19 * * *",
+        "tz": "Asia/Shanghai",
+        "staggerMs": 0
+      },
+      "sessionTarget": "fork",
+      "wakeMode": "always",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "cd C:/Users/ClawAdmin/.qclaw/workspace/job-agent && python -m scanners.scan_sc --no-dry-run"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777807800000,
+        "lastRunAtMs": 1777721400023,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 60295,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "bea-daily-scan",
+      "agentId": "main",
+      "name": "scan_bea_daily",
+      "enabled": true,
+      "createdAtMs": 1777306023337,
+      "updatedAtMs": 1777708955164,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 16 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 BEA 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_bea --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "nextRunAtMs": 1777795200000,
+        "lastRunAtMs": 1777708800022,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 155142,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "zurich-daily-scan",
+      "agentId": "main",
+      "name": "scan_zurich_daily",
+      "enabled": false,
+      "createdAtMs": 1777386022486,
+      "updatedAtMs": 1777734881272,
+      "schedule": {
+        "kind": "cron",
+        "expr": "15 15 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行 ZURICH 职位扫描：执行 cd C:\\Users\\ClawAdmin\\.qclaw\\workspace\\job-agent && python -m scanners.scan_zurich --no-dry-run，完成后汇报扫描结果（raw数量、matched数量）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 2-3 句话以内"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "d3b24a645266-im-bot"
+      },
+      "state": {
+        "lastRunAtMs": 1777706100015,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 88358,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    }
+  ]
+}
