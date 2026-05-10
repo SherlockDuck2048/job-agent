@@ -1,0 +1,526 @@
+{
+
+  "version": "2.1.0",
+
+  "description": "CCO 岗位匹配关键词配置 - 基于人工评审数据训练 | v2.1: 放宽近义词匹配，加入 Owner/Lead/Specialist 兜底",
+
+
+
+
+
+  "job_type_scores": {
+
+    "high_match": {
+
+      "titles": [
+
+        "AI Business Analyst", "AI 需求分析师",
+
+        "AI Process Optimization", "AI 流程优化专家", "AI Process Specialist",
+
+        "Business Analyst", "业务分析师",
+
+        "Project Manager", "项目经理",
+
+        "Product Manager", "产品经理",
+
+        "AI Project Manager", "AI 项目管理",
+
+        "AI Product Owner", "AI Program Manager", "AI Program Director",
+
+        "AI Engagement Manager", "AI Delivery Manager", "AI Implementation Manager",
+
+        "AI Strategy Manager", "AI Strategy Lead",
+
+        "AI/CDO Officer", "Chief Digital Officer",
+
+        "AI Governance Manager", "AI Governance Lead",
+
+        "AI Evangelist", "AI Enablement",
+
+        "GenAI Solution Consultant", "GenAI 解决方案顾问",
+
+        "Digital Transformation", "数字化转型",
+
+        "AI Product Manager", "AI 产品经理",
+
+        "AI Owner", "AI Specialist", "AI Consultant",
+
+        "AI Innovation Manager", "AI Innovator",
+
+        "Business Owner", "Business Specialist",
+
+        "Solution Owner", "Solution Specialist",
+
+        "Digital Owner", "Digital Specialist",
+
+        "Digital Program Manager",
+
+        "Process Owner", "Process Specialist",
+
+        "Automation Specialist", "Automation Consultant"
+
+      ],
+
+      "base_score": 100,
+
+      "priority": "P0",
+
+      "note": "v2.2: AI Evangelist新加入；Owner/Specialist/Consultant等从medium_match移入"
+
+    },
+
+
+
+    "medium_match": {
+
+      "titles": [
+
+        "Solution Consultant", "解决方案顾问",
+
+        "AI Lead", "AI Solutions Lead", "AI Solutions Specialist", "AI Solutions Consultant",
+
+        "AI Technical Lead", "AI Technical Specialist", "AI Technical Manager",
+
+        "AI Engineering Lead", "AI Engineering Specialist",
+
+        "AI Innovation Lead",
+
+        "Data Owner", "Data Lead", "Data Specialist", "Data Consultant",
+
+        "Data Program Manager", "Data Program Lead",
+
+        "Business Lead",
+
+        "Solution Lead",
+
+        "Digital Lead", "Digital Program Lead",
+
+        "Process Lead",
+
+        "Automation Lead",
+
+        "Intelligent Automation Lead", "Intelligent Process Lead",
+
+        "Data Strategy Lead", "Data Governance Lead", "Data Governance Specialist",
+
+        "Analytics Lead", "Analytics Specialist", "Analytics Manager",
+
+        "Business Intelligence Lead", "BI Analyst",
+
+        "AI/ML Business Lead", "AI Data Lead",
+
+        "Innovation Lead", "Innovation Manager", "Innovation Specialist",
+
+        "Head of AI", "Head of Data", "Head of Data and AI",
+
+        "Head of Digital", "Head of Analytics"
+
+      ],
+
+      "base_score": 85,
+
+      "priority": "P1",
+
+      "note": "v2.2: Lead/副级职位保留在medium_match"
+
+    },
+
+
+
+    "low_match": {
+
+      "titles": [
+
+        "AI Engineer", "AI 工程师",
+
+        "Data Scientist", "数据科学家",
+
+        "ML Engineer", "机器学习工程师",
+
+        "Machine Learning Engineer",
+
+        "AI Developer", "AI Architect", "AI Solutions Architect",
+
+        "LLM Engineer", "RAG Engineer", "GenAI Engineer",
+
+        "MLOps Engineer", "MLOps Lead", "AI Platform Engineer"
+
+      ],
+
+      "base_score": 60,
+
+      "priority": "P2"
+
+    }
+
+  },
+
+
+
+
+
+  "tech_penalty_keywords": {
+
+    "high_penalty": {
+
+      "keywords": [
+
+        "strong proficiency in python",
+
+        "hands-on coding",
+
+        "hands-on development",
+
+        "ml modeling",
+
+        "statistical modeling",
+
+        "develop and deploy ml models",
+
+        "build machine learning models",
+
+        "implement ai pipelines",
+
+        "tensorflow",
+
+        "pytorch",
+
+        "phd in artificial intelligence",
+
+        "phd in data science",
+
+        "advanced ml development",
+
+        "taking the lead on hands-on modeling"
+
+      ],
+
+      "penalty": 35,
+
+      "reason": "技术要求过高，需要hands-on开发/建模"
+
+    },
+
+    "medium_penalty": {
+
+      "keywords": [
+
+        "python proficiency",
+
+        "proficiency in python",
+
+        "programming languages",
+
+        "technical design",
+
+        "hands-on engineering",
+
+        "familiarity with programming",
+
+        "cloud ml environments",
+
+        "mlops",
+
+        "vector databases",
+
+        "llm-ops"
+
+      ],
+
+      "penalty": 20,
+
+      "reason": "需要编程/技术能力"
+
+    },
+
+    "low_penalty": {
+
+      "keywords": [
+
+        "python",
+
+        "sql",
+
+        "familiar with coding",
+
+        "technical background"
+
+      ],
+
+      "penalty": 10,
+
+      "reason": "涉及技术背景"
+
+    }
+
+  },
+
+
+
+
+
+  "exclusion_keywords": {
+
+    "non_ai": {
+
+      "keywords": [
+
+        "traditional role",
+
+        "no ai element",
+
+        "与ai无关",
+
+        "完全和ai无关",
+
+        "传统岗位"
+
+      ],
+
+      "penalty": 45,
+
+      "reason": "与AI无关"
+
+    },
+
+    "sales": {
+
+      "keywords": [
+
+        "sales role",
+
+        "account growth",
+
+        "sales experience",
+
+        "business development",
+
+        "need sales experience",
+
+        "销售",
+
+        "客户拓展"
+
+      ],
+
+      "penalty": 35,
+
+      "reason": "销售性质岗位"
+
+    }
+
+  },
+
+
+
+
+
+  "experience_penalty": {
+
+    "threshold_10": {
+
+      "min_years": 10,
+
+      "penalty": 15,
+
+      "reason": "要求10年以上经验"
+
+    },
+
+    "threshold_8": {
+
+      "min_years": 8,
+
+      "penalty": 10,
+
+      "reason": "要求8年以上经验"
+
+    }
+
+  },
+
+
+
+
+
+  "bonus_keywords": {
+
+    "genai": {
+
+      "keywords": [
+
+        "genai", "generative ai", "generativeai",
+
+        "llm", "large language model",
+
+        "rag", "retrieval augmented generation",
+
+        "ai agent", "agent development", "agentic ai",
+
+        "prompt engineering",
+
+        "artificial intelligence", "machine intelligence",
+
+        "intelligent automation", "cognitive computing",
+
+        "predictive ai", "ai-driven", "ai enabled",
+
+        "large language models", "foundation model",
+
+        "chatbot", "conversational ai", "nlp",
+
+        "natural language processing", "computer vision"
+
+      ],
+
+      "bonus": 10,
+
+      "reason": "GenAI/LLM/AI技术相关"
+
+    },
+
+    "fintech": {
+
+      "keywords": [
+
+        "fintech", "financial services",
+
+        "banking", "insurance",
+
+        "保险", "银行", "金融",
+
+        "wealth management", "asset management",
+
+        "investment banking", "capital markets",
+
+        "securities", "stock exchange", "trading platform"
+
+      ],
+
+      "bonus": 5,
+
+      "reason": "金融科技行业"
+
+    },
+
+    "hongkong": {
+
+      "keywords": [
+
+        "hong kong", "hk",
+
+        "香港"
+
+      ],
+
+      "bonus": 3,
+
+      "reason": "香港本地"
+
+    }
+
+  },
+
+
+
+
+
+  "good_fit_indicators": {
+
+    "keywords": [
+
+      "business analysis",
+
+      "requirements elicitation",
+
+      "process optimization",
+
+      "digital transformation",
+
+      "stakeholder management",
+
+      "cross-functional collaboration",
+
+      "ai strategy",
+
+      "ai enablement",
+
+      "流程优化",
+
+      "需求分析",
+
+      "业务分析",
+
+      "跨团队协作",
+
+      "enterprise ai",
+
+      "ai roadmap",
+
+      "ai adoption",
+
+      "data governance",
+
+      "data strategy",
+
+      "data architecture",
+
+      "data management",
+
+      "information management",
+
+      "reporting and analytics",
+
+      "kpi design",
+
+      "performance metrics",
+
+      "change management",
+
+      "process reengineering",
+
+      "workflow optimization",
+
+      "intelligent process"
+
+    ],
+
+    "bonus": 5,
+
+    "reason": "符合CCO核心能力"
+
+  },
+
+
+
+
+
+  "quick_filter": {
+
+    "must_have_keywords": [
+
+      "ai", "data", "business", "product", "project", "process", "digital",
+
+      "genai", "llm", "agent", "rag", "analyst", "manager", "consultant",
+
+      "transformation", "solution", "strategy", "requirement", "stakeholder",
+
+      "lead", "specialist", "owner", "architect", "governance",
+
+      "intelligent", "automation", "analytics", "governance"
+
+    ],
+
+    "exclude_keywords": [
+
+      "intern", "junior", "entry", "fresh graduate", "trainee",
+
+      "clerk", "receptionist", "driver", "security"
+
+    ]
+
+  }
+
+}
+
