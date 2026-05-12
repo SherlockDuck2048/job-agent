@@ -402,30 +402,32 @@ JD_SELECTORS = {
 
 ```
 job-agent/
-├── config/
-│   ├── scan_strategies.py      # 112 平台 URL 配置
-│   ├── keywords-v2.json         # 评分关键词配置
-│   ├── scanner_schedule.json   # 扫描频率配置
-│   └── HK_AI_Jobs_All.xlsx     # 合并结果
-│
+├── SKILL.md                      # Job Hunter Pro Skill 定义
+├── scanner_status.md             # 扫描器状态追踪表
+├── merge_results.py              # 合并去重脚本（含 --new-only）
 ├── scanners/
-│   ├── job_scanner_base.py     # 公共基础库
-│   ├── cco_scorer.py            # 评分引擎
-│   ├── seen_jobs.py             # 去重模块
-│   └── scan_*.py                # 68 个扫描器
-│
+│   ├── seen_jobs.py              # Plan X: 跨会话JD去重模块
+│   ├── job_scanner_base.py       # Plan C: 公共 JD 抓取函数
+│   ├── cco_scorer.py             # 评分引擎
+│   └── scan_*.py                 # 68 个扫描器
+├── config/
+│   ├── scan_strategies.py        # 112 个站点 URL 配置
+│   ├── keywords-v2.json          # 关键词评分配置
+│   ├── scanner_schedule.json     # 扫描频率配置
+│   └── HK_AI_Jobs_All.xlsx       # 合并去重结果
 ├── candidates/
-│   ├── raw/                     # 原始 JSON（133+ files）
+│   ├── raw/                      # 原始 JSON (133 files)
 │   ├── history/
-│   │   └── seen_jobs.json       # 跨会话索引
-│   └── jd_store/                # JD 文本存储
-│       ├── aia/
-│       ├── hsbc/
-│       └── ...
-│
-├── reports/                     # 历史报告
-├── docs/                        # 文档
-└── logs/                        # 扫描日志
+│   │   └── seen_jobs.json        # Plan X 跨会话索引
+│   └── jd_store/                 # JD 正文存储（预留）
+├── docs/
+│   ├── job_agent_PRD_v2.md       # 本文件
+│   ├── data-flow.md              # 数据流文档
+│   └── JD_PDFs/                  # JD PDF 归档
+├── logs/
+│   └── scan_log.md               # 扫描日志
+└── reports/
+    └── *.md                      # 修复报告
 ```
 
 ### 4.3 Excel 输出格式
