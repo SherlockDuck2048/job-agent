@@ -1,6 +1,7 @@
 # Personal Job Assistant - AI Job Auto-Tracking System
 
 > Using technology to solve information overload in job searching
+<img width="2124" height="1241" alt="image" src="https://github.com/user-attachments/assets/e94d25bd-969e-4ff7-b4bf-48c336fcb14b" />
 
 ## 🎯 Why I Built This Project
 
