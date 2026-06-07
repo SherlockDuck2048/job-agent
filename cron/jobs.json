@@ -7,7 +7,6 @@
       "description": "每天10:00运行BOCHK/UBS/AXA扫描器",
       "enabled": false,
       "createdAtMs": 1776275286805,
-      "updatedAtMs": 1776351559170,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -27,15 +26,7 @@
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1776304800016,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 169491,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0
-      }
+      "state": {}
     },
     {
       "id": "6e953e3c-7e4c-4646-b22a-e6076d45d058",
@@ -44,7 +35,6 @@
       "name": "28Hse每日新房盘监控",
       "enabled": true,
       "createdAtMs": 1777114036466,
-      "updatedAtMs": 1778166373129,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -55,21 +45,15 @@
       "payload": {
         "kind": "agentTurn",
         "message": "你现在执行每日28Hse新房盘监控任务。\n\n## 步骤\n1. 运行以下命令抓取数据（注意用powershell不是pwsh）：\n   powershell -ExecutionPolicy Bypass -File \"C:\\Users\\clawAdmin\\.qclaw\\workspace-jozgatymcjihpo6a\\scrape_28hse.ps1\" -MaxPages 3\n\n2. 阅读命令输出，将原始数据整理为精美的楼市日报。\n\n## 输出格式要求\n- 标题：「🏠 28Hse 每日新房盘速报 | YYYY-MM-DD」\n- 按三大区域（香港岛、九龙、新界）分块展示\n- 每套楼盘精简一行：**楼盘名·片区** | 面积 | 售价 | 户型 | 楼层 | 核心亮点 | 🔗链接\n- 若某区当日无新增，明确标注：「今日该片区无新增符合条件放盘」\n- 末尾附「📊 市场概览」：各区新增数量、均价区间、简要行情点评（1-2句）\n- 排版简洁干练，用emoji分区，不要啰嗦\n- **重要：每个楼盘必须附上完整的28Hse链接，格式：https://www.28hse.com/buy/apartment/property-{ID}**\n\n## 筛选条件（已在脚本中实现，仅供参考）\n总价≤1000万港币 | 2-3房 | 楼龄≤20年 | 中高层 | 私人住宅\n\n要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出日报 (4) 保持趋势研究员的专业简洁风格",
-        "timeoutSeconds": 300
+        "timeoutSeconds": 0
       },
       "delivery": {
         "mode": "announce",
-        "bestEffort": true
+        "channel": "wechat-access",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "bestEffort": false
       },
-      "state": {
-        "nextRunAtMs": 1778248800000,
-        "lastRunAtMs": 1778162400007,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 51471,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 0
-      }
+      "state": {}
     },
     {
       "id": "2c154932-daf4-4ad0-bc8c-2c86f20042cb",
@@ -78,7 +62,6 @@
       "name": "AI热搜每日推送",
       "enabled": false,
       "createdAtMs": 1777131815906,
-      "updatedAtMs": 1777174901861,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -94,14 +77,7 @@
         "mode": "announce",
         "bestEffort": true
       },
-      "state": {
-        "lastRunAtMs": 1777161600016,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 226494,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 0
-      }
+      "state": {}
     },
     {
       "id": "50fd025f-90f1-47bf-b77c-493dc841b257",
@@ -109,7 +85,6 @@
       "name": "scan_macquarie_daily",
       "enabled": true,
       "createdAtMs": 1777184196347,
-      "updatedAtMs": 1778202168941,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * *"
@@ -122,20 +97,11 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778202000015,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 168926,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true,
-        "nextRunAtMs": 1778288400000
-      }
+      "state": {}
     },
     {
       "id": "hkjc-daily-scan",
@@ -143,7 +109,6 @@
       "name": "scan_hkjc_daily",
       "enabled": true,
       "createdAtMs": 1777198700000,
-      "updatedAtMs": 1778209352255,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * *"
@@ -156,20 +121,11 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778209200009,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 152246,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "nextRunAtMs": 1778295600000
-      }
+      "state": {}
     },
     {
       "id": "scan-public-sector-daily-1",
@@ -177,7 +133,6 @@
       "name": "scan_public_sector_daily_1",
       "enabled": true,
       "createdAtMs": 1777255708066,
-      "updatedAtMs": 1778214036627,
       "schedule": {
         "kind": "cron",
         "expr": "0 17 * * *"
@@ -190,21 +145,12 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778212800015,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 1236612,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "nextRunAtMs": 1778230800000
-      },
-      "timeout": 1200
+      "timeout": 1200,
+      "state": {}
     },
     {
       "id": "scan-pccw-daily-d42d2d29",
@@ -220,24 +166,13 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
       "agentId": "main",
       "sessionTarget": "current",
-      "wakeMode": "always",
-      "state": {
-        "lastRunAtMs": 1778139000019,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 146683,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true,
-        "nextRunAtMs": 1778225400000
-      },
-      "updatedAtMs": 1778139146702
+      "state": {}
     },
     {
       "id": "scan_bank_daily_3",
@@ -245,7 +180,6 @@
       "name": "scan_bank_daily_3",
       "enabled": true,
       "createdAtMs": 1777296595959,
-      "updatedAtMs": 1778148173260,
       "schedule": {
         "kind": "cron",
         "expr": "50 21 * * *"
@@ -258,21 +192,12 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778148000010,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 173250,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "nextRunAtMs": 1778234400000
-      },
-      "timeout": 1200
+      "timeout": 1200,
+      "state": {}
     },
     {
       "id": "scan-insurance-daily-2",
@@ -280,7 +205,6 @@
       "description": "合并保险扫描：FWD+Zurich+AXA",
       "enabled": true,
       "createdAtMs": 1777737400000,
-      "updatedAtMs": 1778159070914,
       "schedule": {
         "kind": "cron",
         "expr": "0 21 * * *",
@@ -295,20 +219,11 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778158800010,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 270904,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true,
-        "nextRunAtMs": 1778245200000
-      }
+      "state": {}
     },
     {
       "id": "scan-insurance-daily-1",
@@ -316,7 +231,6 @@
       "description": "合并保险扫描：Manulife+Prudential+SunLife+AIG",
       "enabled": true,
       "createdAtMs": 1777737400000,
-      "updatedAtMs": 1778155424011,
       "schedule": {
         "kind": "cron",
         "expr": "0 20 * * *",
@@ -331,20 +245,11 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778155200012,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 223999,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true,
-        "nextRunAtMs": 1778241600000
-      }
+      "state": {}
     },
     {
       "id": "scan-bank-daily-1",
@@ -352,7 +257,6 @@
       "description": "合并银行扫描：DBS+CNCB+CCBAsia+OCBC",
       "enabled": true,
       "createdAtMs": 1777737600000,
-      "updatedAtMs": 1778152501974,
       "schedule": {
         "kind": "cron",
         "expr": "0 19 * * *",
@@ -367,20 +271,11 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778151600015,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 901959,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true,
-        "nextRunAtMs": 1778238000000
-      }
+      "state": {}
     },
     {
       "id": "scan-bank-daily-2",
@@ -388,7 +283,6 @@
       "description": "合并银行扫描：GS+BEA+UBS+SC",
       "enabled": true,
       "createdAtMs": 1777738200000,
-      "updatedAtMs": 1778148739908,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * *",
@@ -403,20 +297,11 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778148173260,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 566648,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true,
-        "nextRunAtMs": 1778234400000
-      }
+      "state": {}
     },
     {
       "id": "scan-consultant-daily-1",
@@ -424,7 +309,6 @@
       "description": "合并咨询类扫描：KPMG+Accenture+EY",
       "enabled": true,
       "createdAtMs": 1778162400000,
-      "updatedAtMs": 1778162364121,
       "schedule": {
         "kind": "cron",
         "expr": "25 21 * * *",
@@ -440,63 +324,18 @@
       },
       "delivery": {
         "mode": "announce",
-        "channel": "openclaw-weixin",
+        "channel": "wechat-access",
         "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "lastRunAtMs": 1778162191817,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 172304,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "nextRunAtMs": 1778246700000
-      }
-    },
-    {
-      "id": "017f46ca-76c6-41c8-b9a6-897f024cd7b0",
-      "name": "scan-jobsdb-daily",
-      "description": "每天21:50运行JobsDB扫描器",
-      "enabled": true,
-      "createdAtMs": 1778167235068,
-      "updatedAtMs": 1778167235068,
-      "schedule": {
-        "kind": "cron",
-        "expr": "50 21 * * *",
-        "tz": "Asia/Shanghai",
-        "staggerMs": 0
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "运行JobsDB扫描器：python C:/Users/ClawAdmin/.qclaw/workspace/job-agent/scanners/scan_jobsdb.py，完成后汇报扫描结果（raw数量、matched数量、新增职位列表）。要求：(1) 不要回复 HEARTBEAT_OK (2) 不要调用 message 工具 (3) 直接输出扫描结果 (4) 控制在 5 句话以内",
-        "timeoutSeconds": 1200
-      },
-      "delivery": {
-        "mode": "announce",
-        "channel": "openclaw-weixin",
-        "to": "o9cq802ouk_i3bGq7zVsm0p3I@im.wechat",
-        "accountId": "d3b24a645266-im-bot"
-      },
-      "state": {
-        "status": "scheduled",
-        "createdAtMs": 1778167235068,
-        "nextRunAtMs": 1778248200000,
-        "lastRunAtMs": null,
-        "runCount": 0,
-        "errorCount": 0
-      }
+      "state": {}
     },
     {
       "id": "1940adb1-a9ca-4895-a194-a7a74da8f213",
       "agentId": "main",
       "name": "scan-jobsdb-daily",
-      "enabled": true,
+      "enabled": false,
       "createdAtMs": 1778167298734,
-      "updatedAtMs": 1778167298734,
       "schedule": {
         "kind": "cron",
         "expr": "50 21 * * *",
@@ -514,9 +353,49 @@
         "to": "o9cq802ouk_i3bGq7zVsm0p3I@im.wechat",
         "accountId": "d3b24a645266-im-bot"
       },
-      "state": {
-        "nextRunAtMs": 1778248200000
-      }
+      "state": {}
+    },
+    {
+      "id": "87a622f9-9a55-4286-bbb8-48b48cf3a1ca",
+      "name": "Memory Dreaming Promotion",
+      "description": "[managed-by=memory-core.short-term-promotion] Promote weighted short-term recalls into MEMORY.md (limit=10, minScore=0.800, minRecallCount=3, minUniqueQueries=3, recencyHalfLifeDays=14, maxAgeDays=30).",
+      "enabled": true,
+      "createdAtMs": 1779553115823,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 * * *"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "__openclaw_memory_core_short_term_promotion_dream__"
+      },
+      "state": {}
+    },
+    {
+      "id": "55d2c9ac-3f14-4034-a83d-19509c48f97e",
+      "agentId": "main",
+      "name": "scan_aws_daily",
+      "enabled": true,
+      "createdAtMs": 1780849267213,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 14 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "运行AWS扫描器：cd C:/Users/ClawAdmin/.qclaw/workspace/job-agent && python scanners/scan_aws.py"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "openclaw-weixin",
+        "to": "o9cq802ouk_i3bGq7zV56Vsm0p3I@im.wechat",
+        "accountId": "10c533372a90-im-bot"
+      },
+      "state": {}
     }
   ]
 }
