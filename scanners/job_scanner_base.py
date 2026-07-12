@@ -6,8 +6,16 @@ import json
 import time
 import random
 import os
+import sys
 from datetime import datetime
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+
+# Fix Windows console encoding issue
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
 
 CDP_URL = "http://127.0.0.1:9222"
 WORKSPACE = r"C:\Users\ClawAdmin\.qclaw\workspace\job-agent"
@@ -387,150 +395,222 @@ def get_full_jd(page, url, jd_selectors=None):
 # Excel 追加函数：扫描器只追加自己的数据到 Excel
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _normalize_link(link: str) -> str:
+    """
+    归一化 URL，用于去重键。
+    - 移除 query string（?ref=xxx）和 fragment（#xxx）
+    - 移除末尾斜杠
+    - 示例: https://linkedin.com/jobs/view/123?ref=ABC → https://linkedin.com/jobs/view/123
+    """
+    if not link:
+        return link
+    from urllib.parse import urlparse, urlunparse
+    try:
+        parsed = urlparse(link.strip())
+        normalized = urlunparse((parsed.scheme, parsed.netloc.lower(),
+                                  parsed.path.rstrip('/'), '', '', ''))
+        return normalized
+    except Exception:
+        return link.strip().rstrip('/')
+
+
+def _parse_scraped_ts(ts_str):
+    """解析 scraped_at 字段，返回可比较的时间字符串（YYYY-MM-DD HH:MM），失败返回 ''。"""
+    if not ts_str:
+        return ''
+    if isinstance(ts_str, (int, float)):
+        return datetime.fromtimestamp(ts_str).strftime('%Y-%m-%d %H:%M')
+    s = str(ts_str).strip()
+    # 常见格式直接截取
+    for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M',
+                '%Y-%m-%d %H:%M', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(s[:len(fmt.replace(' ', '')) if '%H' not in fmt
+                                    else min(len(s), 16)], fmt).strftime('%Y-%m-%d %H:%M')
+        except Exception:
+            pass
+    # ISO 格式带 Z
+    try:
+        return datetime.strptime(s[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y-%m-%d %H:%M')
+    except Exception:
+        pass
+    return s[:16]
+
+
 def append_scanner_to_excel(json_path: str, excel_path: str = None):
     """
-    将单个扫描器的 JSON 结果追加到 Excel
-    - 只读取指定的 json_path（不处理其他扫描器的数据）
-    - 自动跳过 Excel 中已存在的 link（去重）
-    - 不调用 merge，不重新扫描所有 JSON 文件
-    
-    Args:
-        json_path: 扫描器生成的 JSON 文件路径
-        excel_path: Excel 文件路径，默认使用 config/HK_AI_Jobs_All.xlsx
+    将单个扫描器的 JSON 结果追加到 Excel。
+
+    双键去重：
+      1. 归一化 URL（strip query/fragment）—— 同一职位不同 ref 参数视为相同
+      2. Title + Company 组合键——跨平台同一岗位只保留一次
+
+    同一岗位多次出现时，保留 scraped_at 最新版本（覆盖旧行）。
     """
-    # 延迟导入，避免顶层依赖
     try:
-        from openpyxl import load_workbook
+        from openpyxl import load_workbook, Workbook
     except ImportError:
-        print(f"[Excel] 警告: openpyxl 未安装，跳过 Excel 更新")
-        print(f"[Excel] 结果已保存在: {json_path}")
+        print("[Excel] openpyxl not installed, skipping Excel update")
         return
-    
-    # 默认 Excel 路径
+
     if excel_path is None:
         excel_path = os.path.join(WORKSPACE, "config", "HK_AI_Jobs_All.xlsx")
-    
-    # 检查 JSON 文件是否存在
+
     if not os.path.exists(json_path):
-        print(f"[Excel] 警告: JSON 文件不存在: {json_path}")
+        print(f"[Excel] JSON not found: {json_path}")
         return
-    
-    # 加载 JSON 数据
+
+    # ── 1. 加载扫描器 JSON ──────────────────────────────────────
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        jobs = data.get('jobs', [])
+        jobs    = data.get('jobs', [])
         platform = data.get('source', 'Unknown')
     except Exception as e:
-        print(f"[Excel] 错误: 无法读取 JSON: {e}")
+        print(f"[Excel] JSON read error: {e}")
         return
-    
+
     if not jobs:
-        print(f"[Excel] {platform}: 没有职位数据，跳过")
+        print(f"[Excel] {platform}: no jobs, skip")
         return
-    
-    # 加载或创建 Excel
-    try:
-        if os.path.exists(excel_path):
+
+    # ── 2. 读取 Excel 已有数据，构建去重索引 ────────────────────
+    headers = ["ID", "Platform", "Company", "Title", "Link", "Location",
+               "Priority", "Score", "Match Reason", "Post Date", "Scraped At",
+               "JD Summary", "JD File Path"]
+    LINK_IDX   = 4   # 0-based column index
+    TITLE_IDX  = 3
+    COMPANY_IDX= 2
+    SCRAPED_IDX= 10
+
+    existing_rows = []   # [(norm_link, title_lower, company_lower, row_tuple), ...]
+    norm_link_seen = {}  # norm_link -> row (保留最新)
+    tc_seen = {}          # (title_lower, company_lower) -> norm_link
+
+    if os.path.exists(excel_path):
+        try:
             wb = load_workbook(excel_path)
             ws = wb.active
-            # 读取已有链接用于去重
-            existing_links = set()
             for row in ws.iter_rows(min_row=2, values_only=True):
-                if len(row) > 4 and row[4]:  # 第5列是链接
-                    existing_links.add(str(row[4]).strip())
-            print(f"[Excel] 现有 {len(existing_links)} 个职位")
-        else:
-            from openpyxl import Workbook
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "AI Jobs"
-            # 写入表头
-            headers = ["编号", "来源平台", "公司", "职位", "链接", "地点", 
-                      "优先级", "评分", "匹配原因", "发布日期", "抓取时间",
-                      "JD Summary", "完整JD文件路径"]
-            ws.append(headers)
-            existing_links = set()
-            print(f"[Excel] 创建新文件: {excel_path}")
-    except Exception as e:
-        print(f"[Excel] 错误: 无法加载 Excel: {e}")
-        return
-    
-    # 加载 seen_jobs 索引（用于回填 jd_file 路径）
-    seen_data = {}
-    try:
-        from seen_jobs import load_seen_jobs
-        seen_data = load_seen_jobs()
-    except Exception:
-        pass
+                if not row or len(row) < 5 or not row[LINK_IDX]:
+                    continue
+                norm_link = _normalize_link(str(row[LINK_IDX]))
+                title_lc  = str(row[TITLE_IDX] or '').strip().lower()
+                comp_lc   = str(row[COMPANY_IDX] or '').strip().lower()
+                key_tc    = (title_lc, comp_lc)
+                ts        = _parse_scraped_ts(row[SCRAPED_IDX] if len(row) > SCRAPED_IDX else '')
 
-    # 追加新职位 — 编号基于当前 Excel 最大行号
-    added = 0
-    skipped = 0
-    next_row = ws.max_row  # 当前最后一行（表头或数据行）
-    
+                # 同 norm_link：保留 scraped_at 最新那条
+                if norm_link not in norm_link_seen:
+                    norm_link_seen[norm_link] = (ts, row)
+                else:
+                    old_ts, _ = norm_link_seen[norm_link]
+                    if ts > old_ts:
+                        norm_link_seen[norm_link] = (ts, row)
+
+                # Title+Company 索引（保留 URL 更完整的版本）
+                if key_tc not in tc_seen:
+                    tc_seen[key_tc] = norm_link
+        except Exception as e:
+            print(f"[Excel] Load error, creating new: {e}")
+            wb = Workbook(); ws = wb.active; ws.title = "AI Jobs"; ws.append(headers)
+    else:
+        wb = Workbook(); ws = wb.active; ws.title = "AI Jobs"; ws.append(headers)
+
+    print(f"[Excel] {platform}: existing={len(norm_link_seen)} unique jobs")
+
+    # ── 3. 处理新 jobs：去重 + 版本更新 ──────────────────────────
+    added   = 0
+    updated = 0
+    skipped_tc = 0
+    rows_to_write = []
+
     for job in jobs:
-        link = job.get('link', '') or job.get('href', '')
-        if not link:
+        raw_link  = job.get('link', '') or job.get('href', '')
+        if not raw_link:
             continue
-        
-        # 去重检查
-        if link in existing_links:
-            skipped += 1
+        norm_link  = _normalize_link(raw_link)
+        title_lc   = (job.get('title') or '').strip().lower()
+        comp_lc    = (job.get('company') or '').strip().lower()
+        key_tc     = (title_lc, comp_lc)
+        new_ts     = _parse_scraped_ts(job.get('scraped_at', ''))
+
+        # Title+Company 命中 → 完全跳过（跨平台同一岗位）
+        if key_tc in tc_seen:
+            skipped_tc += 1
             continue
-        
-        # 准备行数据
-        # 获取 JD 摘要（使用 LLM 生成道法术器结构）
-        full_jd = job.get('description', '') or job.get('full_jd', '')
-        jd_summary = extract_jd_summary(full_jd, use_llm=True)
-        
-        # 获取 JD 文件路径：优先从 job JSON，其次查 seen_jobs 索引
-        jd_file_path = job.get('jd_file', '')
-        if not jd_file_path:
-            # 回查 seen_jobs.json 的 jd_file 字段
-            seen_jobs_map = seen_data.get('jobs', {})
-            seen_entry = seen_jobs_map.get(link, {})
-            jd_file_path = seen_entry.get('jd_file', '')
-        # 如果仍无路径，尝试从 link 推导（zurich/xxx.txt 格式）
-        if not jd_file_path and full_jd:
-            # 从 URL 提取 job ID
-            import re
-            job_id_match = re.search(r'/(\d+)\??', link)
-            if job_id_match:
-                job_id = job_id_match.group(1)
-                # 根据 source 确定子目录
-                source_lower = platform.lower().replace(' ', '_')
-                jd_file_path = f"{source_lower}/{job_id}.txt"
-        
-        next_row += 1
-        row = [
-            next_row - 1,  # 编号（连续递增）
-            job.get('source', platform),       # 来源平台
-            job.get('company', ''),            # 公司
-            job.get('title', ''),              # 职位
-            link,                              # 链接
-            job.get('location', ''),           # 地点
-            job.get('priority', ''),           # 优先级
-            job.get('score', 0),               # 评分
-            job.get('match_reason', ''),       # 匹配原因
-            job.get('post_date', ''),          # 发布日期
-            job.get('scraped_at', datetime.now().strftime("%Y-%m-%d %H:%M")),  # 抓取时间
-            jd_summary,                        # JD Summary
-            jd_file_path                       # 完整JD文件路径
-        ]
-        
-        ws.append(row)
-        existing_links.add(link)
+
+        # 归一化 URL 已存在 → 比较时间，保留最新
+        if norm_link in norm_link_seen:
+            old_ts, old_row = norm_link_seen[norm_link]
+            if new_ts and old_ts and new_ts > old_ts:
+                # 新版本 → 覆盖
+                rows_to_write.append((norm_link, title_lc, comp_lc, job, new_ts, True))
+                updated += 1
+            else:
+                # 旧版本或时间相同 → 跳过
+                pass
+            continue
+
+        # 完全新岗位
+        rows_to_write.append((norm_link, title_lc, comp_lc, job, new_ts, False))
+        norm_link_seen[norm_link] = (new_ts, None)   # 占位
+        tc_seen[key_tc] = norm_link
         added += 1
-    
-    # 保存
+
+    # ── 4. 合并：保留 Excel 已有行 + 新增/更新行 ─────────────────
+    # 已有行
+    merged_rows = [v[1] for v in norm_link_seen.values() if v[1] is not None]
+    # 新增/更新行
+    for norm_link, title_lc, comp_lc, job, new_ts, is_update in rows_to_write:
+        full_jd       = job.get('description', '') or job.get('full_jd', '')
+        jd_summary    = extract_jd_summary(full_jd, use_llm=False)  # skip LLM for perf
+        jd_file_path  = job.get('jd_file', '')
+        source        = job.get('source', platform)
+
+        new_row = [
+            0,                          # ID → 稍后填充
+            source,
+            job.get('company', ''),
+            job.get('title', ''),
+            raw_link if (job.get('link', '') or job.get('href', '')) == raw_link
+               else (job.get('link', '') or job.get('href', '')),
+            job.get('location', ''),
+            job.get('priority', ''),
+            job.get('score', 0),
+            job.get('match_reason', ''),
+            job.get('post_date', ''),
+            job.get('scraped_at', datetime.now().strftime("%Y-%m-%d %H:%M")),
+            jd_summary,
+            jd_file_path,
+        ]
+        # 修正：raw_link 变量被循环覆盖，需要用 job 的 link
+        new_row[4] = job.get('link', '') or job.get('href', '')
+        merged_rows.append(new_row)
+
+    # 排序：Priority(P0>P1>P2>P3>other) + Score desc
+    PRI_MAP = {'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3}
+    def sort_key(r):
+        pri = str(r[6] or '')
+        return (PRI_MAP.get(pri, 9), -(int(r[7] or 0)))
+    merged_rows.sort(key=sort_key)
+
+    # ── 5. 清空 Sheet，重写全部数据 ─────────────────────────────
+    # 删除所有数据行（从底往上删避免索引偏移）
+    ws.delete_rows(2, ws.max_row)
+
+    for i, row in enumerate(merged_rows, start=1):
+        row = list(row)
+        row[0] = i       # 重编 ID
+        ws.append(row)
+
+    # ── 6. 保存 ─────────────────────────────────────────────────
     try:
         wb.save(excel_path)
-        print(f"[Excel] {platform}: 新增 {added} 个，跳过 {skipped} 个（已存在）")
-        print(f"[Excel] 总计: {len(existing_links)} 个职位")
+        print(f"[Excel] {platform}: +{added} new, ~{updated} updated, "
+              f"{skipped_tc} skipped (TC dupe), total={len(merged_rows)} rows")
     except Exception as e:
-        print(f"[Excel] 错误: 无法保存 Excel: {e}")
-        return
+        print(f"[Excel] Save error: {e}")
 
 # 平台 JD 选择器适配器
 JD_SELECTORS = {
