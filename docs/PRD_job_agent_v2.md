@@ -101,17 +101,6 @@
 | 数据存储 | JSON + Excel | 原始数据 + 报告输出 |
 | 任务调度 | Cron / 手动执行 | 定时扫描 |
 
-### 2.3 扫描策略分类
-
-| Method | 描述 | 数量 | 代表平台 |
-|--------|------|------|----------|
-| `cdp_url` | Playwright URL 参数翻页 | 35 | HSBC, AIA, Manulife |
-| `cdp_input` | Playwright 搜索框输入 | 3 | LinkedIn, Hays |
-| `playwright_dom` | Playwright DOM 解析 | 2 | Deloitte, PwC |
-| `http` | requests 静态抓取 | 18 | Indeed, Randstad |
-| `skip` | 反爬/无页面 | 12 | JobsDB, Michael Page |
-| `urllist` | URL 列表直接请求 | 2 | CCB, CICC |
-
 ---
 
 ## 3. 核心功能
@@ -285,7 +274,7 @@ def scan_mokahr(platform, base_url):
 
 ---
 
-### 3.3 跨会话去重（Plan X）
+### 3.3 Post deduplication（Plan X）
 
 #### 3.3.1 问题背景
 
@@ -335,21 +324,6 @@ python merge_results.py
 #### 3.4.2 解决方案
 
 对通过 `quick_filter` 初筛的岗位，访问详情页获取完整 JD 文本（最多 3000 字符）。
-
-**平台适配器：**
-
-```python
-JD_SELECTORS = {
-    'workday': [
-        "[data-automation-id='jobPostingDescription']",
-        "[class*='job-posting-description']",
-        ...
-    ],
-    'linkedin': ['.jobs-description-content', ...],
-    'mokahr': ['.job-detail-content', ...],
-    'default': ['body']
-}
-```
 
 #### 3.4.3 清洗逻辑
 
@@ -555,67 +529,14 @@ def scan_newcompany():
 
 ---
 
-## 7. 已知问题与解决方案
-
-| 问题 | 根因 | 解决方案 | 状态 |
-|------|------|----------|------|
-| Deloitte: 78 条重复 URL | API title 字段为空 | Playwright DOM 解析 + 正则修复 | ✅ 已修复 |
-| McKinsey: CDP 翻页失效 | 复用 tab 导致 SPA 状态冲突 | Launch 独立浏览器 | ✅ 已修复 |
-| PwC: locator.click() 无效 | Playwright 对 SPA 无效 | 改用 JS `.click()` | ✅ 已修复 |
-| Manulife: cp1252 编码崩溃 | Windows 默认编码 | UTF-8 TextIOWrapper | ✅ 已修复 |
-| AIA: BASE_URL=None | 行被注释 | 取消注释 | ✅ 已修复 |
-| Plan C: JD 字段未使用 | 字段名不匹配 | 统一为 `description` | ✅ 已实现 |
-| Plan X: 重复推送老岗位 | 无跨会话去重 | `seen_jobs.json` + `--new-only` | ✅ 已实现 |
-
----
-
-## 8. 未来规划
-
-### 8.1 短期优化（Q2 2026）
-
-- [ ] 完善定时任务调度（当前全部手动执行）
-- [ ] 新增 20+ 待测试扫描器
-- [ ] 微信/Telegram 推送新职位提醒
-
-### 8.2 中期扩展（Q3 2026）
-
-- [ ] 引入 LLM 自动读取 JD 提取关键技能
-- [ ] 基于历史投递反馈调整评分权重
-- [ ] Dashboard 可视化每日新增趋势
-
-### 8.3 长期愿景
-
-- [ ] 自动投递简历
-- [ ] 面试安排集成
-- [ ] 多用户支持
-
----
-
-## 9. 附录
-
-### 9.1 扫描器状态统计（截至 2026-04-23）
-
-| 状态 | 数量 | 说明 |
-|------|------|------|
-| ✅ Code Frozen | 31 | 已验证通过 |
-| 🔧 Active | 15 | 正在调试 |
-| ⚠️ Re-validate | 10 | URL 更新后需重测 |
-| ❓ Unknown | 12 | 尚未测试 |
-| ⏭️ Skip | 12 | 反爬/无页面 |
-
-### 9.2 数据统计
+## 7. 数据统计
 
 | 指标 | 数值 |
 |------|------|
-| JSON 文件总数 | 133+ |
 | 累计职位数 | ~1400 |
 | 去重后职位数 | ~900 |
 | 推荐职位 (P0+P1) | ~250 |
 
-### 9.3 联系方式
-
-- **GitHub:** github.com/cco/job-agent
-- **文档:** docs.qq.com (AI Knowledge Base)
 
 ---
 
