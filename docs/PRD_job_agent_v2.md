@@ -128,7 +128,7 @@
 | 保险公司 | 6 | AIA, Manulife, Prudential, AIG, SunLife |
 | 四大咨询 | 4 | Deloitte, PwC, KPMG, EY |
 | 科技公司 | 4 | IBM, Microsoft, PCCW, HKT |
-| 香港机构 | 11 | HKEX, HKJC, HK Airport, CLP |
+| 香港机构 | 11 | Airport Authority Hong Kong, HKEX, HKJC, CLP |
 
 #### 3.1.2 扫描器实现模式
 
