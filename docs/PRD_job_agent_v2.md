@@ -246,9 +246,9 @@ def scan_mokahr(platform, base_url):
 
 | 强度 | 关键词示例 | 惩罚分 | 原因 |
 |------|-----------|--------|------|
-| 高 | "strong proficiency in python", "hands-on coding", "tensorflow", "pytorch" | -35 | 需要 hands-on 开发/建模 |
-| 中 | "python proficiency", "mlops", "technical design" | -20 | 需要编程/技术能力 |
-| 低 | "python", "sql", "technical background" | -10 | 涉及技术背景 |
+| 高 | "Java development", "hands-on coding" | -35 | 需要 hands-on 开发/建模 |
+| 中 | "strong proficiency in python" | -20 | 需要编程/技术能力 |
+| 低 | "python background" | -10 | 涉及技术背景 |
 
 **因子 4：排除项惩罚**
 
